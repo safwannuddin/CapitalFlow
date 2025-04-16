@@ -34,3 +34,30 @@ export interface ChartData {
     borderWidth?: number;
   }[];
 }
+
+export interface UserProfile {
+  name: string;
+  monthlyBudget: string;
+  investmentExperience: string;
+  riskTolerance: string;
+  goals: string[];
+  preferredAssets: string[];
+}
+
+export interface MarketInsight {
+  id: string;
+  title: string;
+  description: string;
+  impact: 'positive' | 'negative' | 'neutral';
+  assetClass: string;
+  date: string;
+  source: string;
+}
+
+export interface AIRecommendation {
+  stockId: string;
+  confidence: number;
+  reasoning: string;
+  expectedReturn: string;
+  timeline: 'short' | 'medium' | 'long';
+}

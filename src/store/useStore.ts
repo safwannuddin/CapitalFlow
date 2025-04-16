@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { faker } from '@faker-js/faker';
 import { format, subDays } from 'date-fns';
-import type { Stock, PortfolioSummary, RevenueData } from '../types';
+import type { Stock, PortfolioSummary, RevenueData, MarketInsight, UserProfile } from '../types';
 
 interface StoreState {
   stocks: Stock[];
@@ -11,10 +11,15 @@ interface StoreState {
   searchTerm: string;
   selectedType: string;
   hasCompletedOnboarding: boolean;
+  userProfile: UserProfile | null;
+  marketInsights: MarketInsight[];
+  aiRecommendations: Stock[];
   setSearchTerm: (term: string) => void;
   setSelectedType: (type: string) => void;
-  generateMockData: (preferences?: Record<string, string[]>) => void;
+  generateMockData: (profile: any) => void;
   completeOnboarding: () => void;
+  setUserProfile: (profile: UserProfile) => void;
+  refreshMarketInsights: () => void;
 }
 
 const generateStocks = (preferences?: Record<string, string[]>): Stock[] => {
@@ -104,9 +109,46 @@ export const useStore = create<StoreState>((set, get) => ({
       filteredStocks: stocks,
       portfolioSummary: calculatePortfolioSummary(stocks),
       revenueData: generateRevenueData(),
-    });
-  },
+    });  },
   completeOnboarding: () => {
     set({ hasCompletedOnboarding: true });
   },
+  userProfile: null,
+  marketInsights: [],
+  aiRecommendations: [],
+  setUserProfile: (profile) => {
+    set({ userProfile: profile });
+  },
+  refreshMarketInsights: () => {
+    // Generate random market insights based on user preferences
+    const { userProfile } = get();
+    const assetClasses = userProfile?.preferredAssets || ['stocks', 'crypto', 'bonds'];
+    
+    const newInsights = Array.from({ length: 5 }, () => {
+      const impact = ['positive', 'negative', 'neutral'][Math.floor(Math.random() * 3)] as 'positive' | 'negative' | 'neutral';
+      const assetClass = assetClasses[Math.floor(Math.random() * assetClasses.length)];
+      
+      return {
+        id: faker.string.uuid(),
+        title: faker.finance.transactionDescription(),
+        description: faker.lorem.sentence(),
+        impact,
+        assetClass,
+        date: faker.date.recent().toISOString(),
+        source: faker.company.name() + ' Research'
+      };
+    });
+    
+    set({ marketInsights: newInsights });
+    
+    // Generate AI recommendations based on user profile and market insights
+    const { stocks } = get();
+    
+    // Select a few stocks for recommendations
+    const recommendedStocks = [...stocks]
+      .sort(() => 0.5 - Math.random())
+      .slice(0, 3);
+      
+    set({ aiRecommendations: recommendedStocks });
+  }
 }));

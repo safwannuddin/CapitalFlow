@@ -1,10 +1,12 @@
-import React from 'react';
-import { TrendingUp, TrendingDown, DollarSign, Percent, BarChart3, PieChart } from 'lucide-react';
+import React, { useState } from 'react';
+import { TrendingUp, TrendingDown, DollarSign, Percent, PieChart, RefreshCw } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useStore } from '../store/useStore';
 import { cn } from '../utils/cn';
 
 export const PortfolioOverview: React.FC = () => {
-  const { portfolioSummary } = useStore();
+  const { portfolioSummary, userProfile, generateMockData } = useStore();
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -13,6 +15,15 @@ export const PortfolioOverview: React.FC = () => {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(value);
+  };
+  
+  const refreshData = () => {
+    setIsRefreshing(true);
+    // Simulate data refresh
+    setTimeout(() => {
+      generateMockData(userProfile || undefined);
+      setIsRefreshing(false);
+    }, 1000);
   };
 
   const cards = [
@@ -75,39 +86,77 @@ export const PortfolioOverview: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">Portfolio Overview</h2>
-        <div className="text-sm text-gray-500">
-          Last updated: {new Date().toLocaleString()}
+    <div>
+      <div className="flex justify-between items-center mb-4">
+        <div>
+          <h2 className="text-xl font-bold text-gray-800">Portfolio Overview</h2>
+          {userProfile && (
+            <motion.p 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="text-gray-500"
+            >
+              Welcome back, {userProfile.name}
+            </motion.p>
+          )}
         </div>
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={refreshData}
+          className="p-2 rounded-lg bg-blue-50 hover:bg-blue-100 transition-colors flex items-center gap-1"
+          disabled={isRefreshing}
+        >
+          <RefreshCw className={`h-4 w-4 text-blue-600 ${isRefreshing ? 'animate-spin' : ''}`} />
+          <span className="text-xs text-blue-600 font-medium">Refresh</span>
+        </motion.button>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {cards.map((card, index) => (
-          <div
+          <motion.div
             key={index}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 }}
+            whileHover={{ 
+              y: -4, 
+              boxShadow: '0 12px 20px -5px rgba(0, 0, 0, 0.1)',
+              transition: { duration: 0.2 }
+            }}
             className={cn(
-              "rounded-xl border p-6 transition-all duration-200 hover:shadow-lg",
+              'rounded-xl p-6 border shadow-sm transition-all duration-200',
               card.color,
               card.borderColor
             )}
           >
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium text-gray-600">{card.title}</h3>
-              <card.icon className={cn("h-5 w-5", card.iconColor)} />
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-gray-500 text-sm mb-1">{card.title}</p>
+                {card.customContent ? (
+                  card.customContent
+                ) : (
+                  <motion.p 
+                    className="text-2xl font-bold"
+                    key={card.value} // Forces re-animation when value changes
+                    initial={{ opacity: 0, scale: 0.5 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                  >
+                    {card.value}
+                  </motion.p>
+                )}
+              </div>
+              <motion.div 
+                className={cn('p-2 rounded-lg', card.color)}
+                whileHover={{ rotate: 10 }}
+              >
+                {React.createElement(card.icon, {
+                  className: cn('h-5 w-5', card.iconColor),
+                })}
+              </motion.div>
             </div>
-            {card.customContent ? (
-              card.customContent
-            ) : (
-              <p className={cn(
-                "mt-2 text-2xl font-bold",
-                card.iconColor
-              )}>
-                {card.value}
-              </p>
-            )}
-          </div>
+          </motion.div>
         ))}
       </div>
     </div>
